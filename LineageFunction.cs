@@ -39,9 +39,9 @@ namespace KustoLineage
 
             var connection =
                 new KustoConnectionStringBuilder("https://" + clustername + "." + region + ".kusto.windows.net").WithAadApplicationKeyAuthentication(
-                applicationClientId: "6beaee04-826f-47a6-bfb9-569f6fe42f23",
+                applicationClientId: GetEnvVariable(config, "ClientId"),
                 applicationKey: GetEnvVariable(config, "ClientSecret"),
-                authority: "72f988bf-86f1-41af-91ab-2d7cd011db47");
+                authority: GetEnvVariable(config, "Tenant"));
 
             var adx = KustoClientFactory.CreateCslQueryProvider(connection);
 
