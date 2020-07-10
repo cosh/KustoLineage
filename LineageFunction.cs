@@ -27,7 +27,7 @@ namespace KustoLineage
         }
 
         [FunctionName("LineageFunction")]
-        public static async Task<IActionResult> Run(
+        public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "{region}/{clustername}/lineage")] HttpRequest req,
             string region,
             string clustername,
