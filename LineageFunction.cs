@@ -70,15 +70,59 @@ namespace KustoLineage
             return result;
         }
 
-        private static void AddLineageInformation(ICslQueryProvider adx, Lineage lineage)
+        private static int AddLineageInformation(ICslQueryProvider adx, Lineage lineage)
         {
             var databases = adx.ExecuteQuery<String>(".show databases | project DatabaseName");
 
+            List<Task<IDataReader>> allTablesQueries = new List<Task<IDataReader>>();
+            Dictionary<string, Task<IDataReader>> allTables = new Dictionary<string, Task<IDataReader>>();
+            
             int databaseCount = 0;
             foreach (var aDatabase in databases)
             {
                 databaseCount++;
+
+                var tableTask = adx.ExecuteQueryAsync(aDatabase, ".show tables | project TableName", CreateRequestProperties());
+
+                allTablesQueries.Add(tableTask);
+                allTables.Add(aDatabase, tableTask);
             }
+
+            Task.WaitAll(allTablesQueries.ToArray());
+
+            foreach (var aTableTask in allTables)
+            {
+                var database = aTableTask;
+                IDataReader tableResult = aTableTask.Value.Result;
+
+                while (tableResult.Read())
+                {
+                    var tableName = tableResult.GetString(0);
+
+                    //get update policy
+                    //then: lineage.AddTable(tableName);
+                }
+            }
+
+            return databaseCount;
+        }
+
+        private static ClientRequestProperties CreateRequestProperties()
+        {
+            var queryParameters = new Dictionary<String, String>()
+            {
+                //{ "xIntValue", "111" },
+                // { "xStrValue", "abc" },
+                // { "xDoubleValue", "11.1" }
+            };
+
+            var clientRequestProperties = new ClientRequestProperties(
+                options: null,
+                parameters: queryParameters)
+            {
+                ClientRequestId = "LINEAGE-" + Guid.NewGuid().ToString()
+            };
+            return clientRequestProperties;
         }
 
         private static ICslQueryProvider CreateADXClient(string region, string clustername, IConfigurationRoot config)
