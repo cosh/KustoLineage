@@ -4,10 +4,19 @@ namespace KustoLineage
 {
     public abstract class AGraphObject
     {
+        protected readonly object _lock = new object();
+
         private readonly string _id;
         public string Id
         {
             get { return _id; }
+        }
+
+        private readonly string _type;
+
+        public string Type
+        {
+            get { return _type; }
         }
 
         private Dictionary<string, string> _properties;
@@ -17,9 +26,10 @@ namespace KustoLineage
             set { _properties = value; }
         }
 
-        public AGraphObject(string id)
+        public AGraphObject(string id, string type)
         {
             _id = id;
+            _type = type;
             _properties = new Dictionary<string, string>();
         }
 

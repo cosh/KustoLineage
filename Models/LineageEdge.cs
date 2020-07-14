@@ -16,7 +16,7 @@
 
         }
 
-        public LineageEdge(string id, string vSourceId, string vDestinationId) : base(id)
+        public LineageEdge(string id, string type, string vSourceId, string vDestinationId) : base(id, type)
         {
             _vSourceId = vSourceId;
             _vDestinationId = vDestinationId;
