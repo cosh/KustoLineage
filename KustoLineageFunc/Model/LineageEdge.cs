@@ -1,4 +1,8 @@
-﻿namespace KustoLineage.Models
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace KustoLineageFunc.Model
 {
     public class LineageEdge : AGraphObject
     {
@@ -6,7 +10,7 @@
         public string VSourceId
         {
             get { return _vSourceId; }
-            
+
         }
 
         private readonly string _vDestinationId;

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace KustoLineage.Models
+namespace KustoLineageFunc.Model
 {
     public class LineageGraph : AGraphObject
     {
@@ -43,7 +43,7 @@ namespace KustoLineage.Models
 
         public void AddVertex(LineageVertex updatePolicyVertex)
         {
-            lock(_lock)
+            lock (_lock)
             {
                 _vertices.Add(updatePolicyVertex);
             }

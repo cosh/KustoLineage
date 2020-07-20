@@ -1,13 +1,12 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KustoLineage.Models
+namespace KustoLineageFunc.Model
 {
     public class Database
     {
-        private readonly object _lock = new object(); 
+        private readonly object _lock = new object();
 
         private string _name;
 
@@ -24,9 +23,9 @@ namespace KustoLineage.Models
 
         public void AddUpdatePolicy(string table, UpdatePolicy policy)
         {
-            lock(_lock)
+            lock (_lock)
             {
-                if(_tables.ContainsKey(table))
+                if (_tables.ContainsKey(table))
                 {
                     _tables[table].AddUpdatePolicy(policy);
                 }

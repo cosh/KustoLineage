@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace KustoLineage
+namespace KustoLineageFunc.Model
 {
     public abstract class AGraphObject
     {

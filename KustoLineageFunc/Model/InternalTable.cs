@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KustoLineage.Models
+namespace KustoLineageFunc.Model
 {
     public class InternalTable
     {

@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KustoLineage.Models
+namespace KustoLineageFunc.Model
 {
     public class Lineage
     {
@@ -20,16 +19,9 @@ namespace KustoLineage.Models
             get { return _clustername; }
         }
 
-        private readonly string _region;
-        public string Region
-        {
-            get { return _region; }
-        }
-
-        public Lineage(string clustername, string region)
+        public Lineage(string clustername)
         {
             this._clustername = clustername;
-            this._region = region;
         }
 
         public void AddUpdatePolicy(string databaseName, string tableName, UpdatePolicy policy)
@@ -44,7 +36,7 @@ namespace KustoLineage.Models
                 {
                     var database = new Database(databaseName);
                     database.AddUpdatePolicy(tableName, policy);
-                    
+
                     _databases.Add(databaseName, database);
                 }
             }
