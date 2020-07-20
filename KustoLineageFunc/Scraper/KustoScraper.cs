@@ -1,4 +1,6 @@
-﻿using Kusto.Data.Common;
+﻿using Kusto.Cloud.Platform.Data;
+using Kusto.Cloud.Platform.Utils;
+using Kusto.Data.Common;
 using KustoLineageFunc.Model;
 using Newtonsoft.Json;
 using System;
@@ -48,9 +50,11 @@ namespace KustoLineageFunc.Scraper
 
             #endregion
 
-            #region get update policies
 
             List<Task<IDataReader>> updatePolicyQueries = new List<Task<IDataReader>>();
+            List<Task<IDataReader>> tableDetailsQueries = new List<Task<IDataReader>>();
+
+            #region get update policies
 
             foreach (var aTableTask in allTables)
             {
@@ -68,11 +72,17 @@ namespace KustoLineageFunc.Scraper
                             | mv-expand Policy=todynamic(Policy)
                             | project EntityName, Policy",
                         CreateRequestProperties()));
+
+                    //get table details
+                    tableDetailsQueries.Add(adx.ExecuteQueryAsync(aTableTask.Key,
+                        @".show table " + tableName + @" details
+                            | project-away *Policy, AuthorizedPrincipals",
+                        CreateRequestProperties()));
                 }
             }
 
             Task.WaitAll(updatePolicyQueries.ToArray());
-
+            
             foreach (var aTask in updatePolicyQueries)
             {
                 IDataReader updatePolicyResult = aTask.Result;
@@ -88,6 +98,27 @@ namespace KustoLineageFunc.Scraper
                     var table = entitySplit[1].Replace("]", "");
 
                     lineage.AddUpdatePolicy(database, table, policy);
+                }
+            }
+
+            #endregion
+
+            #region table details
+
+            Task.WaitAll(tableDetailsQueries.ToArray());
+
+            foreach (var aTask in tableDetailsQueries)
+            {
+                IDataReader tableDetailResult = aTask.Result;
+
+                while (tableDetailResult.Read())
+                {
+                    var database = tableDetailResult.GetString(1);
+                    var table = tableDetailResult.GetString(0);
+
+                    var rowCount = tableDetailResult.GetInt64(7);
+
+                    lineage.Databases[database].Tables[table].RowCount = rowCount;
                 }
             }
 

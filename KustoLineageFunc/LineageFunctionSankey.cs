@@ -44,9 +44,11 @@ namespace KustoLineageFunc
 
             var lineage = scraper.Scrape(clustername);
 
-            var result = GraphTransformer.Transfrom(lineage);
+            var graph = GraphTransformer.Transfrom(lineage);
 
-            return new OkObjectResult(JsonConvert.SerializeObject(result));
+            var sankeyGraph = SankeyTransformer.Transform(graph);
+
+            return new OkObjectResult(JsonConvert.SerializeObject(sankeyGraph));
         }
     }
 }
