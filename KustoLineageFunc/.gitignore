@@ -4,6 +4,9 @@
 # Azure Functions localsettings file
 local.settings.json
 
+Properties/serviceDependencies.*
+Properties/PublishProfiles/
+
 # User-specific files
 *.suo
 *.user
