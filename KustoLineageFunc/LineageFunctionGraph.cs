@@ -14,13 +14,13 @@ using KustoLineageFunc.Transformer;
 
 namespace KustoLineageFunc
 {
-    public static class LineageFunction
+    public static class LineageFunctionGraph
     {
         private static readonly string CLUSTERMETRIC = "cluster";
 
-        [FunctionName("LineageFunction")]
+        [FunctionName("LineageFunctionGraph")]
         public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "{clustername}/lineage")] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "{clustername}/lineage/graph")] HttpRequest req,
             string clustername,
             ILogger log,
             ExecutionContext context)
@@ -44,7 +44,9 @@ namespace KustoLineageFunc
 
             var lineage = scraper.Scrape(clustername);
 
-            return new OkObjectResult(JsonConvert.SerializeObject(lineage));
+            var result = GraphTransformer.Transfrom(lineage);
+
+            return new OkObjectResult(JsonConvert.SerializeObject(result));
         }
     }
 }

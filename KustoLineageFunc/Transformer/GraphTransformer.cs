@@ -43,9 +43,13 @@ namespace KustoLineageFunc.Transformer
 
                 #region table nodes
 
+                var tableIdx = new Dictionary<String, String>();
+
                 foreach (var aTable in aDatabase.Value.Tables)
                 {
                     var tableVertexId = databaseVertexId + aTable.Key;
+
+                    tableIdx.Add(aTable.Key, tableVertexId);
 
                     var tableVertex = new LineageVertex(tableVertexId, "table");
                     tableVertex
@@ -82,10 +86,44 @@ namespace KustoLineageFunc.Transformer
 
                 #region external tables
 
+                var externalTableIdx = new Dictionary<String, String>();
+
                 foreach (var anExternalTable in aDatabase.Value.ExternalTables)
                 {
+                    var externalTableVertexId = databaseVertexId + anExternalTable.Key;
+
+                    var externalTableVertex = new LineageVertex(externalTableVertexId, "externalTable");
+                    externalTableVertex
+                       .AddProperty("name", anExternalTable.Key);
+
+                    externalTableIdx.Add(anExternalTable.Key, externalTableVertexId);
+
+                    result.AddVertex(externalTableVertex);
+                }
+
+                #endregion
+
+                #region continous export
 
 
+                foreach (var aContinousExport in aDatabase.Value.ContinousExport)
+                {
+                    var ceEdgeId = databaseVertexId + aContinousExport.ExternalTableName;
+
+                    var sourceTableName = ExtractTable(aContinousExport.CurserScopedQuery);
+
+                    if(tableIdx.ContainsKey(sourceTableName) && externalTableIdx.ContainsKey(aContinousExport.ExternalTableName))
+                    {
+                        var sourceVertexId = tableIdx[ExtractTable(aContinousExport.CurserScopedQuery)];
+                        var destinationVertexId = externalTableIdx[aContinousExport.ExternalTableName];
+
+                        var ceEdge = new LineageEdge(ceEdgeId, "exportsTo", sourceVertexId, destinationVertexId);
+
+                        ceEdge.AddProperty("Query", aContinousExport.Query);
+                        ceEdge.AddProperty("Name", aContinousExport.ExternalTableName);
+
+                        result.AddEdge(ceEdge);
+                    }
                 }
 
                 #endregion
@@ -94,6 +132,11 @@ namespace KustoLineageFunc.Transformer
             #endregion
 
             return result;
+        }
+
+        private static string ExtractTable(string curserScopedQuery)
+        {
+            return curserScopedQuery.Split("].[")[1].Replace("\'", "").Replace("]", "");
         }
     }
 }
