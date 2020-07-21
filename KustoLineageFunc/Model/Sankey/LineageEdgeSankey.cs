@@ -20,10 +20,15 @@ namespace KustoLineageFunc.Model
 
         }
 
+        public int value { get => _value; set => _value = value; }
+
+        private int _value;
+
         public LineageEdgeSankey(string id, string type, int mySource, int myTarget) : base(id, type)
         {
             _source = mySource;
             _target = myTarget;
+            _value = 2;
         }
     }
 }

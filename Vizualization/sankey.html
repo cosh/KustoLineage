@@ -49,12 +49,12 @@ var sankey = d3.sankey()
     .size([width, height]);
 
 // load the data
-d3.json("https://kustolineage.azurewebsites.net/api/westeurope/ruppenmuehleadx/lineage?code=Fl1JZIz8Xe7cyWw5H4S3laDM1XbygUWvcbxL0Pv22KwHlHF7nsDrlA==", function(error, graph) {
+d3.json("https://kustolineage.azurewebsites.net/api/ruppenmuehleadx.westeurope/lineage/sankey?code=Dxgr25kXIb27RaFA7GBhEyJdhn2y4prYo59o9xxXQrmnKx/faKo3ag==", function(error, graph) {
 
   // Constructs a new Sankey generator with the default settings.
   sankey
-      .nodes(graph.Vertices)
-      .links(graph.Edges)
+      .nodes(graph.nodes)
+      .links(graph.links)
       .layout(1);
 
   // add in the links
@@ -85,7 +85,7 @@ d3.json("https://kustolineage.azurewebsites.net/api/westeurope/ruppenmuehleadx/l
     .append("rect")
       .attr("height", function(d) { return d.dy; })
       .attr("width", sankey.nodeWidth())
-      .style("fill", function(d) { return d.color = color(d.name.replace(/ .*/, "")); })
+      .style("fill", function(d) { return d.color = color(d.Type.replace(/ .*/, "")); })
       .style("stroke", function(d) { return d3.rgb(d.color).darker(2); })
     // Add hover text
     .append("title")
