@@ -34,47 +34,66 @@ namespace KustoLineageFunc.Scraper
             var databases = adx.ExecuteQuery<String>(".show databases | project DatabaseName");
 
             List<Task<IDataReader>> allTablesQueries = new List<Task<IDataReader>>();
-            Dictionary<string, Task<IDataReader>> allTables = new Dictionary<string, Task<IDataReader>>();
+            List<Task<IDataReader>> externalTableQueries = new List<Task<IDataReader>>();
+            List<Task<IDataReader>> continousExportQueries = new List<Task<IDataReader>>();
+            //Dictionary<string, Task<IDataReader>> allTables = new Dictionary<string, Task<IDataReader>>();
 
             #region get Tables
 
             foreach (var aDatabase in databases)
             {
-                var tableTask = adx.ExecuteQueryAsync(aDatabase, ".show tables | project TableName", CreateRequestProperties());
+                #region internal tables
+                var tableTask = adx.ExecuteQueryAsync(aDatabase, ".show tables | project TableName, Database=current_database()", CreateRequestProperties());
 
                 allTablesQueries.Add(tableTask);
-                allTables.Add(aDatabase, tableTask);
+                //allTables.Add(aDatabase, tableTask);
+                #endregion
+
+                #region external tables
+                externalTableQueries.Add(adx.ExecuteQueryAsync(aDatabase,
+                    @".show external tables
+                        | project TableName, Database=current_database()",
+                    CreateRequestProperties()));
+
+                continousExportQueries.Add(adx.ExecuteQueryAsync(aDatabase,
+                    @".show continuous-exports 
+                        | project Name, ExternalTableName, Query, CursorScopedTables=todynamic(CursorScopedTables), Database=current_database()
+                        | mv-expand CursorScopedTables to typeof(string)",
+                    CreateRequestProperties()));
+
+                #endregion
             }
 
             Task.WaitAll(allTablesQueries.ToArray());
 
             #endregion
 
-
             List<Task<IDataReader>> updatePolicyQueries = new List<Task<IDataReader>>();
             List<Task<IDataReader>> tableDetailsQueries = new List<Task<IDataReader>>();
 
             #region get update policies
 
-            foreach (var aTableTask in allTables)
+            foreach (var aTableTask in allTablesQueries)
             {
-                IDataReader tableResult = aTableTask.Value.Result;
+                IDataReader tableResult = aTableTask.Result;
 
                 while (tableResult.Read())
                 {
                     var tableName = tableResult.GetString(0);
 
-                    lineage.AddTable(aTableTask.Key, tableName);
+                    var databaseName = tableResult.GetString(1);
+
+                    lineage.AddTable(databaseName, tableName);
 
                     //get update policy
-                    updatePolicyQueries.Add(adx.ExecuteQueryAsync(aTableTask.Key,
+                    updatePolicyQueries.Add(adx.ExecuteQueryAsync(databaseName,
                         @".show table " + tableName + @" policy update
                             | mv-expand Policy=todynamic(Policy)
                             | project EntityName, Policy",
                         CreateRequestProperties()));
 
                     //get table details
-                    tableDetailsQueries.Add(adx.ExecuteQueryAsync(aTableTask.Key,
+                    tableDetailsQueries.Add(adx.ExecuteQueryAsync(databaseName,
                         @".show table " + tableName + @" details
                             | project-away *Policy, AuthorizedPrincipals",
                         CreateRequestProperties()));
@@ -119,6 +138,54 @@ namespace KustoLineageFunc.Scraper
                     var rowCount = tableDetailResult.GetInt64(7);
 
                     lineage.Databases[database].Tables[table].RowCount = rowCount;
+                }
+            }
+
+            #endregion
+
+            #region external tables
+
+            Task.WaitAll(externalTableQueries.ToArray());
+
+            foreach (var aTask in externalTableQueries)
+            {
+                IDataReader externalTableResult = aTask.Result;
+
+                while (externalTableResult.Read())
+                {
+                    var tableName = externalTableResult.GetString(0);
+
+                    var databaseName = externalTableResult.GetString(1);
+
+                    lineage.AddExternalTable(databaseName, tableName);
+                }
+            }
+
+            #endregion
+
+            #region continous export
+
+            Task.WaitAll(continousExportQueries.ToArray());
+
+            foreach (var aTask in continousExportQueries)
+            {
+                IDataReader continousExportResult = aTask.Result;
+
+                while (continousExportResult.Read())
+                {
+                    var continousExportName = continousExportResult.GetString(0);
+
+                    var externalTableName = continousExportResult.GetString(1);
+
+                    var query = continousExportResult.GetString(2);
+
+                    var curserScopedQuery = continousExportResult.GetString(3);
+
+                    var databaseName = continousExportResult.GetString(4);
+
+                    var ce = new ContinousExport(continousExportName, externalTableName, query, curserScopedQuery);
+
+                    lineage.AddContinousExport(databaseName, ce);
                 }
             }
 

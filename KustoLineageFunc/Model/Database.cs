@@ -16,6 +16,14 @@ namespace KustoLineageFunc.Model
 
         public Dictionary<string, InternalTable> Tables { get => _tables; }
 
+        private Dictionary<String, ExternalTable> _externalTables = new Dictionary<string, ExternalTable>();
+
+        public Dictionary<string, ExternalTable> ExternalTables { get => _externalTables; }
+
+        private List<ContinousExport> _continousExport = new List<ContinousExport>();
+
+        public List<ContinousExport> ContinousExport { get => _continousExport; }
+
         public Database(string name)
         {
             _name = name;
@@ -38,7 +46,19 @@ namespace KustoLineageFunc.Model
             }
         }
 
-        public void AddTable(string tableName)
+        public void AddExternalTable(string tableName)
+        {
+            lock (_lock)
+            {
+                if (!_externalTables.ContainsKey(tableName))
+                {
+                    ExternalTable externalTable = new ExternalTable(tableName);
+                    _externalTables.Add(tableName, externalTable);
+                }
+            }
+        }
+
+        public void AddInternalTable(string tableName)
         {
             lock (_lock)
             {
@@ -47,6 +67,14 @@ namespace KustoLineageFunc.Model
                     InternalTable internalTable = new InternalTable(tableName);
                     _tables.Add(tableName, internalTable);
                 }
+            }
+        }
+
+        public void AddContinousExport(ContinousExport ce)
+        {
+            lock (_lock)
+            {
+                _continousExport.Add(ce);
             }
         }
     }

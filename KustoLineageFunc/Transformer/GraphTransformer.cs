@@ -79,10 +79,19 @@ namespace KustoLineageFunc.Transformer
                 }
 
                 #endregion
+
+                #region external tables
+
+                foreach (var anExternalTable in aDatabase.Value.ExternalTables)
+                {
+
+
+                }
+
+                #endregion
             }
 
             #endregion
-
 
             return result;
         }

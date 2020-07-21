@@ -48,12 +48,48 @@ namespace KustoLineageFunc.Model
             {
                 if (_databases.ContainsKey(databaseName))
                 {
-                    _databases[databaseName].AddTable(tableName);
+                    _databases[databaseName].AddInternalTable(tableName);
                 }
                 else
                 {
                     var database = new Database(databaseName);
-                    database.AddTable(tableName);
+                    database.AddInternalTable(tableName);
+
+                    _databases.Add(databaseName, database);
+                }
+            }
+        }
+
+        public void AddExternalTable(string databaseName, string tableName)
+        {
+            lock (_lock)
+            {
+                if (_databases.ContainsKey(databaseName))
+                {
+                    _databases[databaseName].AddExternalTable(tableName);
+                }
+                else
+                {
+                    var database = new Database(databaseName);
+                    database.AddExternalTable(tableName);
+
+                    _databases.Add(databaseName, database);
+                }
+            }
+        }
+
+        public void AddContinousExport(string databaseName, ContinousExport ce)
+        {
+            lock (_lock)
+            {
+                if (_databases.ContainsKey(databaseName))
+                {
+                    _databases[databaseName].AddContinousExport(ce);
+                }
+                else
+                {
+                    var database = new Database(databaseName);
+                    database.AddContinousExport(ce);
 
                     _databases.Add(databaseName, database);
                 }
