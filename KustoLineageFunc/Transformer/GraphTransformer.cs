@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace KustoLineageFunc.Transformer
 {
@@ -57,26 +58,31 @@ namespace KustoLineageFunc.Transformer
 
                     result.AddVertex(tableVertex);
 
-                    var tableEdge = new LineageEdge(Guid.NewGuid().ToString(), "hasInternalTable", databaseVertexId, tableVertexId);
-
-                    result.AddEdge(tableEdge);
-
                     #region update policies
 
-                    foreach (var aUpdatePolicy in aTable.Value.UpdatePolicies)
+                    if (aTable.Value.UpdatePolicies.Count > 0)
                     {
-                        var upEdgeId = Guid.NewGuid().ToString();
-                        var sourceVertexId = databaseVertexId + aUpdatePolicy.Source;
-                        var destinationVertexId = tableVertexId;
+                        foreach (var aUpdatePolicy in aTable.Value.UpdatePolicies)
+                        {
+                            var upEdgeId = Guid.NewGuid().ToString();
+                            var sourceVertexId = databaseVertexId + aUpdatePolicy.Source;
+                            var destinationVertexId = tableVertexId;
 
-                        var upEdge = new LineageEdge(upEdgeId, "propagatesViaUp", sourceVertexId, destinationVertexId);
+                            var upEdge = new LineageEdge(upEdgeId, "propagatesViaUp", sourceVertexId, destinationVertexId);
 
-                        upEdge.AddProperty("IsEnabled", aUpdatePolicy.IsEnabled.ToString());
-                        upEdge.AddProperty("IsTransactional", aUpdatePolicy.IsTransactional.ToString());
-                        upEdge.AddProperty("PropagateIngestionProperties", aUpdatePolicy.PropagateIngestionProperties.ToString());
-                        upEdge.AddProperty("Query", aUpdatePolicy.Query.ToString());
+                            upEdge.AddProperty("IsEnabled", aUpdatePolicy.IsEnabled.ToString());
+                            upEdge.AddProperty("IsTransactional", aUpdatePolicy.IsTransactional.ToString());
+                            upEdge.AddProperty("PropagateIngestionProperties", aUpdatePolicy.PropagateIngestionProperties.ToString());
+                            upEdge.AddProperty("Query", aUpdatePolicy.Query.ToString());
 
-                        result.AddEdge(upEdge);
+                            result.AddEdge(upEdge);
+                        }
+                    }
+                    else
+                    {
+                        var tableEdge = new LineageEdge(Guid.NewGuid().ToString(), "hasInternalTable", databaseVertexId, tableVertexId);
+
+                        result.AddEdge(tableEdge);
                     }
 
                     #endregion
@@ -85,7 +91,7 @@ namespace KustoLineageFunc.Transformer
                 #endregion
 
                 #region external tables
-
+                
                 var externalTableIdx = new Dictionary<String, String>();
 
                 foreach (var anExternalTable in aDatabase.Value.ExternalTables)
@@ -100,11 +106,10 @@ namespace KustoLineageFunc.Transformer
 
                     result.AddVertex(externalTableVertex);
                 }
-
+                
                 #endregion
 
                 #region continous export
-
 
                 foreach (var aContinousExport in aDatabase.Value.ContinousExport)
                 {
@@ -125,6 +130,8 @@ namespace KustoLineageFunc.Transformer
                         result.AddEdge(ceEdge);
                     }
                 }
+
+
 
                 #endregion
             }
